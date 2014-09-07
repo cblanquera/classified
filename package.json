@@ -14,7 +14,7 @@
 	"structure",
 	"constructor",
 	"inheritence",
-	"constant",
+	"constant"
   ],
   "dependencies": {},
   "main": "./index.js",

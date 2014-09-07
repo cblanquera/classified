@@ -1,4 +1,4 @@
-!Classified
+#Classified
 
   Real OOP for Javascript.
 
