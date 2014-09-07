@@ -2,6 +2,11 @@
 	/* Definition
 	-------------------------------*/
 	var classified = function() {
+		/* Constants
+		-------------------------------*/
+		var INVALID_DEFINE = 'Expecting argument 1 in define() to be an object or return an object.';
+		var INVALID_EXTEND = 'Expecting argument 1 in extend() to be an object or return an object.';
+		
 		/* Properties
 		-------------------------------*/
 		var method 		= {},
@@ -25,7 +30,7 @@
 			
 			//if it is not an object
 			if(typeof prototype !== 'object') {
-				throw 'Expecting argument 1 in define() to be an object or return an object.';
+				throw INVALID_DEFINE;
 			}
 			
 			//loop and add to allow partial definitions
@@ -82,7 +87,7 @@
 			
 			//if it is not an object
 			if(typeof prototype !== 'object') {
-				throw 'Expecting argument 1 in extend() to be an object or return an object.';
+				throw INVALID_EXTEND;
 			}
 			
 			extend.push(prototype);
@@ -431,7 +436,7 @@
 			return function(definition) {
 				definition = definition || {};
 				return classified().define(definition);
-			}
+			};
 		});
 	//how about jQuery?
 	} else if(typeof jQuery === 'function' && typeof jQuery.extend === 'function') {
@@ -441,7 +446,7 @@
 				return classified().define(definition);
 			}
 		});
-	} else if(window) {
+	} else if(typeof window === 'object') {
 		window.classified = function(definition) {
 			definition = definition || {};
 			return classified().define(definition);
