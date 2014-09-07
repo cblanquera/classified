@@ -1,7 +1,7 @@
 {
   "name": "classified",
   "description": "Real OOP for Javascript",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": {
     "name": "Christian Blanquera",
     "email": "cblanquera@openovate.com"
@@ -17,7 +17,7 @@
 	"constant"
   ],
   "dependencies": {},
-  "main": "./index.js",
+  "main": "./classified.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/cblanquera/classified.git"

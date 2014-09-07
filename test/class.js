@@ -1,5 +1,5 @@
 var assert 		= require('assert');
-var classified 	= require('../index');
+var classified 	= require('../classified');
 
 //Sample Root Class
 var Root = classified(function() {

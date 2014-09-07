@@ -107,10 +107,10 @@
 			
 			//throw in the extends
 			for(var i = 0; i < extend.length; i++) {
-				_copy(_getPublic(extend[i]), final, true);
-				_copy(_getProtected(extend[i]), protect, true);
-				_copy(_getPubtected(extend[i]), parents, true);
-				_copy(_getPrivate(extend[i]), parentSecret, true);
+				_copy(_getPublic(extend[i])		, final			, true);
+				_copy(_getProtected(extend[i])	, protect		, true);
+				_copy(_getPubtected(extend[i])	, parents		, true);
+				_copy(_getPrivate(extend[i])	, parentSecret	, true);
 			}
 			
 			//throw in the definition now
@@ -136,7 +136,7 @@
 			for(key in final) {
 				if(final.hasOwnProperty(key)) {
 					//if it's not a function
-					if(toString.call(final[key]) !== '[object Function]') {
+					if(typeof final[key] !== 'function' || _isNative(final[key])) {
 						continue;
 					}
 					
@@ -315,7 +315,6 @@
 			|| value instanceof Date
 			|| value instanceof RegExp
 			|| value instanceof Array
-			|| value instanceof Function
 			|| value instanceof String
 			|| value instanceof Boolean
 			|| value instanceof Number) {
@@ -421,7 +420,7 @@
 	/* Adaptor
 	-------------------------------*/
 	//if node
-	if(module && module.exports) {
+	if(typeof module === 'object' && module.exports) {
 		module.exports = function(definition) {
 			definition = definition || {};
 			return classified().define(definition);
@@ -435,7 +434,7 @@
 			}
 		});
 	//how about jQuery?
-	} else if(jQuery && typeof jQuery.extend === 'function') {
+	} else if(typeof jQuery === 'function' && typeof jQuery.extend === 'function') {
 		jQuery.extend({
 			classified: function(definition) {
 				definition = definition || {};
