@@ -1,3 +1,15 @@
+/**
+ * Adds protected, private, constants, parent(super)
+ * functionality to regular defined classes.
+ * In the backend the methods are being hijacked
+ * creating the extra public properties and destroying them
+ * after it finishes. 
+ * 
+ * The idea came from http://ejohn.org/blog/simple-javascript-inheritance/
+ * 
+ * The main quirk is when dealing with async inside the methods. In these cases,
+ * methods need to be stored statically in order to use it inside of an async
+ */
 (function() {
 	/* Definition
 	-------------------------------*/
@@ -25,7 +37,12 @@
 			//if prototype is a function
 			if(typeof prototype === 'function') {
 				//the return of that function should be an object
-				prototype = prototype();
+				var define = {};
+				prototype = prototype(define);
+				
+				if(!prototype) {
+					prototype = define;
+				}
 			}
 			
 			//if it is not an object
@@ -102,8 +119,7 @@
 		 * @return function
 		 */
 		method.get = function() {
-			var stack 			= 0,
-				parentStack		= 0,
+			var stack 			= { method: 0, parent: 0 },
 				final 			= {}, 
 				parents 		= {}, 
 				protect 		= {},
@@ -112,10 +128,10 @@
 			
 			//throw in the extends
 			for(var i = 0; i < extend.length; i++) {
-				_copy(_getPublic(extend[i])		, final			, true);
-				_copy(_getProtected(extend[i])	, protect		, true);
-				_copy(_getPubtected(extend[i])	, parents		, true);
-				_copy(_getPrivate(extend[i])	, parentSecret	, true);
+				_copy(_getPublic(extend[i]), final, true);
+				_copy(_getProtected(extend[i]), protect, true);
+				_copy(_getPubtected(extend[i]), parents, true);
+				_copy(_getPrivate(extend[i]), parentSecret, true);
 			}
 			
 			//throw in the definition now
@@ -148,118 +164,34 @@
 					//We do it this way to capture closure variables that 
 					//changes inside of a loop. Inside of the alter callback
 					//we do not want to reference variables outside of the closure
-					final[key] = (function(callback) {
-						return function() {
-							//we need to count stack calls to know when to modify
-							//the instance and when it is safe to de-modify the instance
-							
-							//if no stack
-							if(!stack++) {
-								//setup the instance
-								//remember the scope
-								var self = this, property;
-								
-								//make the magic parent variable an object
-								this.__parent = {}
-								
-								//again we need to set the parents up
-								//everytime we call this method
-								for(property in parents) {
-									if(parents.hasOwnProperty(property)) {
-										//the new callback simply applies
-										//the original scope. Again, we do 
-										//it this way to capture closure variables 
-										//that changes inside of a loop. 
-										this.__parent[property] = (function(callback) {
-											return function() {
-												//for parents add
-												if(!parentStack++) {
-													//lets set up private
-													for(property in parentSecret) {
-														if(parentSecret.hasOwnProperty(property)) {
-															self[property] = parentSecret[property];	
-														}
-													}
-												}
-												
-												var results = callback.apply(self, arguments);
-												
-												//if there is no more stack count
-												if(!--parentStack) {
-													//remove private
-													for(property in parentSecret) {
-														if(parentSecret.hasOwnProperty(property)) {
-															delete self[property];	
-														}
-													}
-												}
-												
-												return results;
-											};
-										})(parents[property]);	
-									}
-								}
-								
-								//also lets set up protect
-								for(property in protect) {
-									if(protect.hasOwnProperty(property)) {
-										this[property] = protect[property];	
-									}
-								}
-								
-								//also lets set up private
-								for(property in secret) {
-									if(secret.hasOwnProperty(property)) {
-										this[property] = secret[property];	
-									}
-								}
-							}
-							
-							//always inject constants
-							for(property in constants) {
-								if(constants.hasOwnProperty(property)) {
-									this[property] = constants[property];	
-								}
-							}
-							
-							// The method only need to be bound temporarily, so we
-							// remove it when we're done executing
-							results = callback.apply(this, arguments);
-							
-							
-							//if there is no more stack count
-							if(!--stack) {
-								//remove parent
-								delete this.__parent;
-								
-								//remove protected
-								for(property in protect) {
-									if(protect.hasOwnProperty(property)) {
-										delete this[property];	
-									}
-								}
-								
-								//remove private
-								for(property in secret) {
-									if(secret.hasOwnProperty(property)) {
-										delete this[property];	
-									}
-								}
-							}
-							
-							return results;
-						};
-					})(final[key]);
+					final[key] = _hijackMethod(final[key], protect, secret, constants, parents, stack, parentSecret);
 				}
 			}
 			
 			//empty class container
 			var container = function() {
-				if(typeof this.construct === 'function') {
+				if(typeof this.___construct === 'function') {
 					//construct magic
-					this.construct.apply(this, arguments);
+					this.___construct.apply(this, arguments);
 				}
 			}, prototype = container.prototype = final;
+			
+			//bind the loader to the container
+			container.load = function() {
+				//empty class container
+				var definition = function() {};
+				
+				definition.prototype = final;
+				
+				var instance = new definition();
+					
+				if(typeof instance.___construct === 'function') {
+					//manually call construct here
+					instance.___construct.apply(instance, arguments);	
+				}
+				
+				return instance;
+			};
 			
 			return container;
 		};
@@ -270,23 +202,116 @@
 		 * @return object
 		 */
 		method.load = function() {
-			//empty class container
-			var definition = function() {};
-			
-			definition.prototype = this.get().prototype;
-			
-			var instance = new definition();
-				
-			if(typeof instance.construct === 'function') {
-				//manually call construct here
-				instance.construct.apply(instance, arguments);	
-			}
-			
-			return instance;
+			return this.get().load();
 		};
 		
 		/* Private Methods
 		-------------------------------*/
+		var _hijackMethod = function(callback, protect, secret, constants, parents, stack, parentSecret) {
+			return function() {
+				//we need to count stack calls to know when to modify
+				//the instance and when it is safe to de-modify the instance
+				
+				//if no stack
+				if(!stack.method++) {
+					//setup the instance
+					//remember the scope
+					var self = this, property;
+					
+					//make the magic parent variable an object
+					this.___parent = {}
+					
+					//again we need to set the parents up
+					//everytime we call this method
+					for(property in parents) {
+						if(parents.hasOwnProperty(property)) {
+							//the new callback simply applies
+							//the original scope. Again, we do 
+							//it this way to capture closure variables 
+							//that changes inside of a loop. 
+							this.___parent[property] = _hijackParent(parents[property], self, stack, parentSecret);	
+						}
+					}
+					
+					//also lets set up protect
+					for(property in protect) {
+						if(protect.hasOwnProperty(property)) {
+							this[property] = protect[property];	
+						}
+					}
+					
+					//also lets set up private
+					for(property in secret) {
+						if(secret.hasOwnProperty(property)) {
+							this[property] = secret[property];	
+						}
+					}
+				}
+				
+				//always inject constants
+				for(property in constants) {
+					if(constants.hasOwnProperty(property)) {
+						this[property] = constants[property];	
+					}
+				}
+				
+				// The method only need to be bound temporarily, so we
+				// remove it when we're done executing
+				results = callback.apply(this, arguments);
+				
+				//if there is no more stack count
+				if(!--stack.method) {
+					//remove parent
+					delete this.___parent;
+					
+					//remove protected
+					for(property in protect) {
+						if(protect.hasOwnProperty(property)) {
+							delete this[property];	
+						}
+					}
+					
+					//remove private
+					for(property in secret) {
+						if(secret.hasOwnProperty(property)) {
+							delete this[property];	
+						}
+					}
+				}
+				
+				return results;
+			};
+		};
+		
+		var _hijackParent = function(callback, scope, stack, secret) {
+			return function() {
+				var property;
+				//for parents add
+				if(!stack.parent++) {
+					//lets set up private
+					for(property in secret) {
+						if(secret.hasOwnProperty(property)) {
+							scope[property] = secret[property];	
+						}
+					}
+				}
+				
+				var results = callback.apply(scope, arguments);
+				
+				//if there is no more stack count
+				if(!--stack.parent) {
+					//remove private
+					for(property in secret) {
+						if(secret.hasOwnProperty(property)) {
+							delete scope[property];	
+						}
+					}
+				}
+				
+				return results;
+			};
+		};
+		
 		var _copy = function(source, destination, deep) {
 			var j, key, keys = Object.keys(source), i = keys.length;
 			

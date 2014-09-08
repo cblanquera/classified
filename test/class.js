@@ -32,7 +32,7 @@ var Root = classified(function() {
 		}
 	};
 	
-	prototype.construct = function() {
+	prototype.___construct = function() {
 		this.constructCalled = true;
 	};
 	
@@ -149,7 +149,7 @@ describe('Class Test Suite', function() {
 		it('should be able access parent methods', function() {
 			var child = classified({
 				sampleMethod: function() {
-					return this.__parent.sampleMethod()
+					return this.___parent.sampleMethod()
 				}
 			}).extend(Root.definition()).load();
 			
@@ -159,7 +159,7 @@ describe('Class Test Suite', function() {
 		it('should be able access parent protected methods', function() {
 			var child = classified({
 				sampleMethod: function() {
-					return this.__parent._sampleMethod();
+					return this.___parent._sampleMethod();
 				}
 			}).extend(Root.definition()).load();
 			
@@ -169,7 +169,7 @@ describe('Class Test Suite', function() {
 		it('should not be able access parent private methods', function() {
 			var child = classified({
 				sampleMethod: function() {
-					return typeof this.__parent.__sampleMethod;
+					return typeof this.___parent.__sampleMethod;
 				}
 			}).extend(Root.definition()).load();
 			
@@ -180,7 +180,7 @@ describe('Class Test Suite', function() {
 	describe('Grand Children Tests', function() {
 		var Child = classified({
 			sampleMethod: function() {
-				return this.__parent._sampleMethod();
+				return this.___parent._sampleMethod();
 			}
 		}).extend(Root.definition());
 		
@@ -192,7 +192,7 @@ describe('Class Test Suite', function() {
 		
 		var grand = classified({
 			sampleMethod: function() {
-				return this.__parent.sampleMethod();
+				return this.___parent.sampleMethod();
 			},
 			
 			sampleMethod2: function() {

@@ -51,7 +51,7 @@ var RootClass = classified({
 	__sampleProperty: 6.5,
 	
 	//constructor
-	construct: function() {
+	___construct: function() {
 		this.constructCalled = true;
 	},
 	
@@ -89,7 +89,7 @@ var ChildClass = classified(function() {
 	
 	//protected methods
 	prototype._sampleMethod = function() {
-		return this.__parent._sampleMethod();
+		return this.___parent._sampleMethod();
 	};
 	
 	return prototype;
@@ -129,4 +129,9 @@ try {
   * parents() - Returns direct parents of this definition
   * get() - Returns the publically accessable class definition function
   * load() - Returns class defined instantiation
-  
+
+### What's up with the underscores?
+
+  * _ - protected properties and methods
+  * __ - private properties and methods
+  * ___ - Magic placeholder (Waiting on harmony)
