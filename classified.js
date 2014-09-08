@@ -208,7 +208,7 @@
 		/* Private Methods
 		-------------------------------*/
 		var _hijackMethod = function(callback, protect, secret, constants, parents, stack, parentSecret) {
-			return function() {
+			return function __classifiedBinded__() {
 				//we need to count stack calls to know when to modify
 				//the instance and when it is safe to de-modify the instance
 				
@@ -284,7 +284,7 @@
 		};
 		
 		var _hijackParent = function(callback, scope, stack, secret) {
-			return function() {
+			return function __classifiedBinded__() {
 				var property;
 				//for parents add
 				if(!stack.parent++) {
