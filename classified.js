@@ -202,7 +202,7 @@
 		 * @return object
 		 */
 		method.load = function() {
-			return this.get().load();
+			return this.get().load.apply(null, arguments);
 		};
 		
 		/* Private Methods
