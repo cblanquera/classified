@@ -267,6 +267,7 @@
 					//remove protected
 					for(property in protect) {
 						if(protect.hasOwnProperty(property)) {
+							protect[property] = this[property];
 							delete this[property];	
 						}
 					}
@@ -274,6 +275,7 @@
 					//remove private
 					for(property in secret) {
 						if(secret.hasOwnProperty(property)) {
+							secret[property] = this[property];
 							delete this[property];	
 						}
 					}
@@ -402,9 +404,11 @@
 		var _getPublic = function(prototype) {
 			var destination = {};
 			for(var key in prototype) {
-				if(!/^_[a-zA-Z0-9]/.test(key)
-				&& !/^__[a-zA-Z0-9]/.test(key)) {
-					destination[key] = prototype[key];
+				if(prototype.hasOwnProperty(key)) {
+					if(!/^_[a-zA-Z0-9]/.test(key)
+					&& !/^__[a-zA-Z0-9]/.test(key)) {
+						destination[key] = prototype[key];
+					}
 				}
 			}
 			
@@ -414,8 +418,10 @@
 		var _getProtected = function(prototype) {
 			var destination = {};
 			for(var key in prototype) {
-				if(/^_[a-zA-Z0-9]/.test(key)) {
-					destination[key] = prototype[key];
+				if(prototype.hasOwnProperty(key)) {
+					if(/^_[a-zA-Z0-9]/.test(key)) {
+						destination[key] = prototype[key];
+					}
 				}
 			}
 			
@@ -425,8 +431,10 @@
 		var _getPrivate = function(prototype) {
 			var destination = {};
 			for(var key in prototype) {
-				if(/^__[a-zA-Z0-9]/.test(key)) {
-					destination[key] = prototype[key];
+				if(prototype.hasOwnProperty(key)) {
+					if(/^__[a-zA-Z0-9]/.test(key)) {
+						destination[key] = prototype[key];
+					}
 				}
 			}
 			
@@ -436,8 +444,11 @@
 		var _getPubtected = function(prototype) {
 			var destination = {};
 			for(var key in prototype) {
-				if(!/^__[a-zA-Z0-9]/.test(key)) {
-					destination[key] = prototype[key];
+				if(prototype.hasOwnProperty(key)) {
+					if(typeof prototype[key] === 'function' 
+					&& !/^__[a-zA-Z0-9]/.test(key)) {
+						destination[key] = prototype[key];
+					}
 				}
 			}
 			

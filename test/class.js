@@ -54,6 +54,15 @@ var Root = classified(function() {
 		+ this.__sampleMethod();
 	};
 	
+	prototype.samplePersistMethod = function() {
+		return ++ this._sampleProperty;
+	};
+	
+	prototype.samplePersistMethod2 = function() {
+		this.__sampleProperty = 'George' + this.__sampleProperty;
+		return this.__sampleProperty;
+	};
+	
 	return prototype;
 });
 
@@ -89,6 +98,13 @@ describe('Class Test Suite', function() {
 		
 		it('should be able to access protected and private inside a method', function() {
 			assert.equal('foo_bar__zoo', root.sampleAccessMethod());
+		});
+		
+		it('should be able to persist protected and private', function() {
+			assert.equal(6.5, root.samplePersistMethod());
+			assert.equal(7.5, root.samplePersistMethod());
+			assert.equal('George6.5', root.samplePersistMethod2());
+			assert.equal('GeorgeGeorge6.5', root.samplePersistMethod2());
 		});
 		
 		it('should patrol constants', function() {
@@ -149,7 +165,7 @@ describe('Class Test Suite', function() {
 		it('should be able access parent methods', function() {
 			var child = classified({
 				sampleMethod: function() {
-					return this.___parent.sampleMethod()
+					return this.___parent.sampleMethod();
 				}
 			}).extend(Root.definition()).load();
 			
