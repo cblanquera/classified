@@ -21,9 +21,13 @@
 		
 		/* Properties
 		-------------------------------*/
-		var method 		= {},
-			definition	= {},
-			extend		= [];
+		var method = function() {
+			return method.load.apply(method, arguments);
+		},
+		
+		definition	= {},
+		
+		extend		= [];
 			
 		/* Public Methods
 		-------------------------------*/
