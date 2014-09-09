@@ -172,30 +172,7 @@
 				}
 			}
 			
-			//empty class container
-			var container = function() {
-				if(typeof this.___construct === 'function') {
-					//construct magic
-					this.___construct.apply(this, arguments);
-				}
-			}, prototype = container.prototype = final;
-			
-			//bind the loader to the container
-			container.load = function() {
-				//empty class container
-				var definition = function() {};
-				
-				definition.prototype = final;
-				
-				var instance = new definition();
-					
-				if(typeof instance.___construct === 'function') {
-					//manually call construct here
-					instance.___construct.apply(instance, arguments);	
-				}
-				
-				return instance;
-			};
+			container.prototype = final;
 			
 			return container;
 		};
@@ -209,257 +186,283 @@
 			return this.get().load.apply(null, arguments);
 		};
 		
-		/* Private Methods
+		/* Class Container
 		-------------------------------*/
-		var _hijackMethod = function(callback, protect, secret, constants, parents, stack, parentSecret) {
-			return function __classifiedBinded__() {
-				//we need to count stack calls to know when to modify
-				//the instance and when it is safe to de-modify the instance
-				
-				//if no stack
-				if(!stack.method++) {
-					//setup the instance
-					//remember the scope
-					var self = this, property;
-					
-					//make the magic parent variable an object
-					this.___parent = {}
-					
-					//again we need to set the parents up
-					//everytime we call this method
-					for(property in parents) {
-						if(parents.hasOwnProperty(property)) {
-							//the new callback simply applies
-							//the original scope. Again, we do 
-							//it this way to capture closure variables 
-							//that changes inside of a loop. 
-							this.___parent[property] = _hijackParent(parents[property], self, stack, parentSecret);	
-						}
-					}
-					
-					//also lets set up protect
-					for(property in protect) {
-						if(protect.hasOwnProperty(property)) {
-							this[property] = protect[property];	
-						}
-					}
-					
-					//also lets set up private
-					for(property in secret) {
-						if(secret.hasOwnProperty(property)) {
-							this[property] = secret[property];	
-						}
-					}
-				}
-				
-				//always inject constants
-				for(property in constants) {
-					if(constants.hasOwnProperty(property)) {
-						this[property] = constants[property];	
-					}
-				}
-				
-				// The method only need to be bound temporarily, so we
-				// remove it when we're done executing
-				results = callback.apply(this, arguments);
-				
-				//if there is no more stack count
-				if(!--stack.method) {
-					//remove parent
-					delete this.___parent;
-					
-					//remove protected
-					for(property in protect) {
-						if(protect.hasOwnProperty(property)) {
-							protect[property] = this[property];
-							delete this[property];	
-						}
-					}
-					
-					//remove private
-					for(property in secret) {
-						if(secret.hasOwnProperty(property)) {
-							secret[property] = this[property];
-							delete this[property];	
-						}
-					}
-				}
-				
-				return results;
-			};
+		var container = function() {
+			if(typeof this.___construct === 'function') {
+				//construct magic
+				this.___construct.apply(this, arguments);
+			}
 		};
 		
-		var _hijackParent = function(callback, scope, stack, secret) {
-			return function __classifiedBinded__() {
-				var property;
-				//for parents add
-				if(!stack.parent++) {
-					//lets set up private
-					for(property in secret) {
-						if(secret.hasOwnProperty(property)) {
-							scope[property] = secret[property];	
-						}
-					}
-				}
+		//bind the loader to the container
+		container.load = function() {
+			//empty class container
+			var definition = function() {};
+			
+			definition.prototype = container.prototype;
+			
+			var instance = new definition();
 				
-				var results = callback.apply(scope, arguments);
-				
-				//if there is no more stack count
-				if(!--stack.parent) {
-					//remove private
-					for(property in secret) {
-						if(secret.hasOwnProperty(property)) {
-							delete scope[property];	
-						}
-					}
-				}
-				
-				return results;
-			};
-		};
-		
-		var _copy = function(source, destination, deep) {
-			var j, key, keys = Object.keys(source), i = keys.length;
-			
-			while (i--) {
-				key = keys[i];
-				destination[key] = source[key];
-				
-				if(deep
-				&& typeof source[key] === 'object'
-				&& !_isNative(source[key])) {
-					destination[key] = _copy(source[key], {}, deep);
-				} else if(deep && source[key] instanceof Array) {
-					destination[key] = _copy(source[key], [], deep);
-				}
+			if(typeof instance.___construct === 'function') {
+				//manually call construct here
+				instance.___construct.apply(instance, arguments);	
 			}
 			
-			return destination;
-		};
-		
-		var _isNative = function(value) {
-			//do the easy ones first
-			if(value === Date
-			|| value === RegExp
-			|| value === Math
-			|| value === Array
-			|| value === Function
-			|| value === JSON
-			|| value === String
-			|| value === Boolean
-			|| value === Number
-			|| value instanceof Date
-			|| value instanceof RegExp
-			|| value instanceof Array
-			|| value instanceof String
-			|| value instanceof Boolean
-			|| value instanceof Number) {
-				return true;
-			}
-			
-			if((/\{\s*\[native code\]\s*\}/).test('' + value)) {
-				return true;
-			}
-			
-			//see: http://davidwalsh.name/detect-native-function
-			// Used to resolve the internal `[[Class]]` of values
-			var toString = Object.prototype.toString;
-			
-			// Used to resolve the decompiled source of functions
-			var fnToString = Function.prototype.toString;
-			
-			// Used to detect host constructors (Safari > 4; really typed array specific)
-			var reHostCtor = /^\[object .+?Constructor\]$/;
-			
-			// Compile a regexp using a common native method as a template.
-			// We chose `Object#toString` because there's a good chance it is not being mucked with.
-			var reNative = RegExp('^' +
-			// Coerce `Object#toString` to a string
-			String(toString)
-				// Escape any special regexp characters
-				.replace(/[.*+?^${}()|[\]\/\\]/g, '\\$&')
-				// Replace mentions of `toString` with `.*?` to keep the template generic.
-				// Replace thing like `for ...` to support environments like Rhino which add extra info
-				// such as method arity.
-				.replace(/toString|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$');
-			
-			var type = typeof value;
-			return type === 'function'
-				// Use `Function#toString` to bypass the value's own `toString` method
-				// and avoid being faked out.
-				? reNative.test(fnToString.call(value))
-				// Fallback to a host object check because some environments will represent
-				// things like typed arrays as DOM methods which may not conform to the
-				// normal native pattern.
-				: (value && type === 'object' && reHostCtor.test(toString.call(value))) || false;
-		};
-		
-		var _getConstants = function(prototype) {
-			var destination = {};
-			for(var key in prototype) {
-				if(/^[A-Z0-9_]+$/.test(key)) {
-					destination[key] = prototype[key];
-				}
-			}
-			
-			return destination;
-		};
-		
-		var _getPublic = function(prototype) {
-			var destination = {};
-			for(var key in prototype) {
-				if(prototype.hasOwnProperty(key)) {
-					if(!/^_[a-zA-Z0-9]/.test(key)
-					&& !/^__[a-zA-Z0-9]/.test(key)) {
-						destination[key] = prototype[key];
-					}
-				}
-			}
-			
-			return destination;
-		};
-		
-		var _getProtected = function(prototype) {
-			var destination = {};
-			for(var key in prototype) {
-				if(prototype.hasOwnProperty(key)) {
-					if(/^_[a-zA-Z0-9]/.test(key)) {
-						destination[key] = prototype[key];
-					}
-				}
-			}
-			
-			return destination;
-		};
-		
-		var _getPrivate = function(prototype) {
-			var destination = {};
-			for(var key in prototype) {
-				if(prototype.hasOwnProperty(key)) {
-					if(/^__[a-zA-Z0-9]/.test(key)) {
-						destination[key] = prototype[key];
-					}
-				}
-			}
-			
-			return destination;
-		};
-		
-		var _getPubtected = function(prototype) {
-			var destination = {};
-			for(var key in prototype) {
-				if(prototype.hasOwnProperty(key)) {
-					if(typeof prototype[key] === 'function' 
-					&& !/^__[a-zA-Z0-9]/.test(key)) {
-						destination[key] = prototype[key];
-					}
-				}
-			}
-			
-			return destination;
+			return instance;
 		};
 		
 		return method;
+	};
+	
+	/* Private Methods
+	-------------------------------*/
+	var _hijackMethod = function(callback, protect, secret, constants, parents, stack, parentSecret) {
+		return function __classifiedBinded__() {
+			//we need to count stack calls to know when to modify
+			//the instance and when it is safe to de-modify the instance
+			
+			//if no stack
+			if(!stack.method++) {
+				//setup the instance
+				//remember the scope
+				var self = this, property;
+				
+				//make the magic parent variable an object
+				this.___parent = {}
+				
+				//again we need to set the parents up
+				//everytime we call this method
+				for(property in parents) {
+					if(parents.hasOwnProperty(property)) {
+						//the new callback simply applies
+						//the original scope. Again, we do 
+						//it this way to capture closure variables 
+						//that changes inside of a loop. 
+						this.___parent[property] = _hijackParent(parents[property], self, stack, parentSecret);	
+					}
+				}
+				
+				//also lets set up protect
+				for(property in protect) {
+					if(protect.hasOwnProperty(property)) {
+						this[property] = protect[property];	
+					}
+				}
+				
+				//also lets set up private
+				for(property in secret) {
+					if(secret.hasOwnProperty(property)) {
+						this[property] = secret[property];	
+					}
+				}
+			}
+			
+			//always inject constants
+			for(property in constants) {
+				if(constants.hasOwnProperty(property)) {
+					this[property] = constants[property];	
+				}
+			}
+			
+			// The method only need to be bound temporarily, so we
+			// remove it when we're done executing
+			results = callback.apply(this, arguments);
+			
+			//if there is no more stack count
+			if(!--stack.method) {
+				//remove parent
+				delete this.___parent;
+				
+				//remove protected
+				for(property in protect) {
+					if(protect.hasOwnProperty(property)) {
+						protect[property] = this[property];
+						delete this[property];	
+					}
+				}
+				
+				//remove private
+				for(property in secret) {
+					if(secret.hasOwnProperty(property)) {
+						secret[property] = this[property];
+						delete this[property];	
+					}
+				}
+			}
+			
+			return results;
+		};
+	};
+	
+	var _hijackParent = function(callback, scope, stack, secret) {
+		return function __classifiedBinded__() {
+			var property;
+			//for parents add
+			if(!stack.parent++) {
+				//lets set up private
+				for(property in secret) {
+					if(secret.hasOwnProperty(property)) {
+						scope[property] = secret[property];	
+					}
+				}
+			}
+			
+			var results = callback.apply(scope, arguments);
+			
+			//if there is no more stack count
+			if(!--stack.parent) {
+				//remove private
+				for(property in secret) {
+					if(secret.hasOwnProperty(property)) {
+						delete scope[property];	
+					}
+				}
+			}
+			
+			return results;
+		};
+	};
+	
+	var _copy = function(source, destination, deep) {
+		var j, key, keys = Object.keys(source), i = keys.length;
+		
+		while (i--) {
+			key = keys[i];
+			destination[key] = source[key];
+			
+			if(deep
+			&& typeof source[key] === 'object'
+			&& !_isNative(source[key])) {
+				destination[key] = _copy(source[key], {}, deep);
+			} else if(deep && source[key] instanceof Array) {
+				destination[key] = _copy(source[key], [], deep);
+			}
+		}
+		
+		return destination;
+	};
+	
+	var _isNative = function(value) {
+		//do the easy ones first
+		if(value === Date
+		|| value === RegExp
+		|| value === Math
+		|| value === Array
+		|| value === Function
+		|| value === JSON
+		|| value === String
+		|| value === Boolean
+		|| value === Number
+		|| value instanceof Date
+		|| value instanceof RegExp
+		|| value instanceof Array
+		|| value instanceof String
+		|| value instanceof Boolean
+		|| value instanceof Number) {
+			return true;
+		}
+		
+		if((/\{\s*\[native code\]\s*\}/).test('' + value)) {
+			return true;
+		}
+		
+		//see: http://davidwalsh.name/detect-native-function
+		// Used to resolve the internal `[[Class]]` of values
+		var toString = Object.prototype.toString;
+		
+		// Used to resolve the decompiled source of functions
+		var fnToString = Function.prototype.toString;
+		
+		// Used to detect host constructors (Safari > 4; really typed array specific)
+		var reHostCtor = /^\[object .+?Constructor\]$/;
+		
+		// Compile a regexp using a common native method as a template.
+		// We chose `Object#toString` because there's a good chance it is not being mucked with.
+		var reNative = RegExp('^' +
+		// Coerce `Object#toString` to a string
+		String(toString)
+			// Escape any special regexp characters
+			.replace(/[.*+?^${}()|[\]\/\\]/g, '\\$&')
+			// Replace mentions of `toString` with `.*?` to keep the template generic.
+			// Replace thing like `for ...` to support environments like Rhino which add extra info
+			// such as method arity.
+			.replace(/toString|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$');
+		
+		var type = typeof value;
+		return type === 'function'
+			// Use `Function#toString` to bypass the value's own `toString` method
+			// and avoid being faked out.
+			? reNative.test(fnToString.call(value))
+			// Fallback to a host object check because some environments will represent
+			// things like typed arrays as DOM methods which may not conform to the
+			// normal native pattern.
+			: (value && type === 'object' && reHostCtor.test(toString.call(value))) || false;
+	};
+	
+	var _getConstants = function(prototype) {
+		var destination = {};
+		for(var key in prototype) {
+			if(/^[A-Z0-9_]+$/.test(key)) {
+				destination[key] = prototype[key];
+			}
+		}
+		
+		return destination;
+	};
+	
+	var _getPublic = function(prototype) {
+		var destination = {};
+		for(var key in prototype) {
+			if(prototype.hasOwnProperty(key)) {
+				if(!/^_[a-zA-Z0-9]/.test(key)
+				&& !/^__[a-zA-Z0-9]/.test(key)) {
+					destination[key] = prototype[key];
+				}
+			}
+		}
+		
+		return destination;
+	};
+	
+	var _getProtected = function(prototype) {
+		var destination = {};
+		for(var key in prototype) {
+			if(prototype.hasOwnProperty(key)) {
+				if(/^_[a-zA-Z0-9]/.test(key)) {
+					destination[key] = prototype[key];
+				}
+			}
+		}
+		
+		return destination;
+	};
+	
+	var _getPrivate = function(prototype) {
+		var destination = {};
+		for(var key in prototype) {
+			if(prototype.hasOwnProperty(key)) {
+				if(/^__[a-zA-Z0-9]/.test(key)) {
+					destination[key] = prototype[key];
+				}
+			}
+		}
+		
+		return destination;
+	};
+	
+	var _getPubtected = function(prototype) {
+		var destination = {};
+		for(var key in prototype) {
+			if(prototype.hasOwnProperty(key)) {
+				if(typeof prototype[key] === 'function' 
+				&& !/^__[a-zA-Z0-9]/.test(key)) {
+					destination[key] = prototype[key];
+				}
+			}
+		}
+		
+		return destination;
 	};
 	
 	/* Adaptor
