@@ -1,7 +1,7 @@
 {
   "name": "classified",
   "description": "Real OOP for Javascript",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "author": {
     "name": "Christian Blanquera",
     "email": "cblanquera@openovate.com"

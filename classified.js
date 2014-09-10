@@ -13,11 +13,11 @@
 (function() {
 	/* Definition
 	-------------------------------*/
-	var classified = function() {
+	var registry = {}, classified = function() {
 		/* Constants
 		-------------------------------*/
 		var INVALID_DEFINE = 'Expecting argument 1 in define() to be an object or return an object.';
-		var INVALID_EXTEND = 'Expecting argument 1 in extend() to be an object or return an object.';
+		var INVALID_TRAIT = 'Expecting argument 1 in trait() to be a registry item, an object or return an object.';
 		
 		/* Properties
 		-------------------------------*/
@@ -26,7 +26,6 @@
 		},
 		
 		definition	= {},
-		
 		extend		= [];
 			
 		/* Public Methods
@@ -99,7 +98,20 @@
 		 * @param function|object - if function, will use prototype
 		 * @return this
 		 */
-		method.extend = function(prototype) {
+		method.trait = function(prototype) {
+			//if prototype is a string
+			//and it's definied in the registry
+			if(typeof prototype === 'string') {
+				//is it a saved state?
+				if(typeof registry[prototype] !== 'undefined') {
+					prototype = registry[prototype];
+				//its a string and we do not know
+				//what to do with it
+				} else {
+					throw INVALID_TRAIT;
+				}
+			}
+			
 			//if prototype is a function
 			if(typeof prototype === 'function') {
 				//the return of that function should be an object
@@ -108,12 +120,22 @@
 			
 			//if it is not an object
 			if(typeof prototype !== 'object') {
-				throw INVALID_EXTEND;
+				throw INVALID_TRAIT;
 			}
 			
 			extend.push(prototype);
 			
 			return this;
+		};
+		
+		/**
+		 * Creates a child definition
+		 *
+		 * @param function|object - if function, must return object
+		 * @return function
+		 */
+		method.extend = function(prototype) {
+			return classified().define(prototype).trait(this.definition());
 		};
 		
 		/**
@@ -123,7 +145,7 @@
 		 * @return function
 		 */
 		method.get = function() {
-			var stack 			= { method: 0, parent: 0 },
+			var stack 			= { method: 0, parents: 0 },
 				final 			= {}, 
 				parents 		= {}, 
 				protect 		= {},
@@ -184,6 +206,17 @@
 		 */
 		method.load = function() {
 			return this.get().load.apply(null, arguments);
+		};
+
+		/**
+		 * Registers this class for extend
+		 *
+		 * @param string
+		 * @return this
+		 */
+		method.register = function(name) {
+			registry[name] = this.definition();
+			return this;
 		};
 		
 		/* Class Container
@@ -299,7 +332,7 @@
 		return function __classifiedBinded__() {
 			var property;
 			//for parents add
-			if(!stack.parent++) {
+			if(!stack.parents++) {
 				//lets set up private
 				for(property in secret) {
 					if(secret.hasOwnProperty(property)) {
@@ -311,7 +344,7 @@
 			var results = callback.apply(scope, arguments);
 			
 			//if there is no more stack count
-			if(!--stack.parent) {
+			if(!--stack.parents) {
 				//remove private
 				for(property in secret) {
 					if(secret.hasOwnProperty(property)) {
@@ -489,6 +522,7 @@
 				return classified().define(definition);
 			}
 		});
+	//ok fine lets put it in windows.
 	} else if(typeof window === 'object') {
 		window.classified = function(definition) {
 			definition = definition || {};

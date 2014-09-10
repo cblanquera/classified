@@ -117,17 +117,17 @@ describe('Class Test Suite', function() {
 		var root = Root.load();
 		
 		it('should copy constants', function() {
-			var child = classified({ SOME_CONSTANT_2: 44.5 }).extend(Root.definition()).load();
+			var child = classified({ SOME_CONSTANT_2: 44.5 }).trait(Root.definition()).load();
 			assert.equal('foo', child.SOME_CONSTANT);
 		});
 		
 		it('should call construct', function() {
-			var child = classified({}).extend(Root.definition()).load();
+			var child = classified({}).trait(Root.definition()).load();
 			assert.equal(true, child.constructCalled);
 		});
 		
 		it('should be the same as root', function() {
-			var child = classified({}).extend(Root.definition()).load();
+			var child = classified({}).trait(Root.definition()).load();
 			assert.equal(child.sampleProperty, root.sampleProperty);
 			assert.equal(child.sampleDeepProperty.sample1, root.sampleDeepProperty.sample1);
 			assert.equal(child.sampleDeepProperty.sample2[1], root.sampleDeepProperty.sample2[1]);
@@ -138,7 +138,7 @@ describe('Class Test Suite', function() {
 		});
 		
 		it('should not change properties of root', function() {
-			var child = classified({}).extend(Root.definition()).load();
+			var child = classified({}).trait(Root.definition()).load();
 			
 			child.sampleProperty = 5.5;
 			child.sampleDeepProperty.sample1 = 'hi';
@@ -150,9 +150,9 @@ describe('Class Test Suite', function() {
 		});
 		
 		it('should be able to add properties', function() {
-			var child = classified({
+			var child = Root.extend({
 				childSample: 4
-			}).extend(Root.definition()).load();
+			}).load();
 			
 			child.sampleProperty = 5.5;
 			child.sampleDeepProperty.sample1 = 'hi';
@@ -167,7 +167,7 @@ describe('Class Test Suite', function() {
 				sampleMethod: function() {
 					return this.___parent.sampleMethod();
 				}
-			}).extend(Root.definition()).load();
+			}).trait(Root.definition()).load();
 			
 			assert.equal('foo', child.sampleMethod());
 		});
@@ -177,7 +177,7 @@ describe('Class Test Suite', function() {
 				sampleMethod: function() {
 					return this.___parent._sampleMethod();
 				}
-			}).extend(Root.definition()).load();
+			}).trait(Root.definition()).load();
 			
 			assert.equal('_bar', child.sampleMethod());
 		});
@@ -187,18 +187,30 @@ describe('Class Test Suite', function() {
 				sampleMethod: function() {
 					return typeof this.___parent.__sampleMethod;
 				}
-			}).extend(Root.definition()).load();
+			}).trait(Root.definition()).load();
+			
+			assert.equal('undefined', child.sampleMethod());
+		});
+		
+		it('should not be able to register and access root', function() {
+			Root.register('rooty');
+			
+			var child = classified({
+				sampleMethod: function() {
+					return typeof this.___parent.__sampleMethod;
+				}
+			}).trait('rooty').load();
 			
 			assert.equal('undefined', child.sampleMethod());
 		});
 	});
 	
 	describe('Grand Children Tests', function() {
-		var Child = classified({
+		var Child = Root.extend({
 			sampleMethod: function() {
 				return this.___parent._sampleMethod();
 			}
-		}).extend(Root.definition());
+		});
 		
 		var Trait = classified({
 			_sampleMethod2: function() {
@@ -206,7 +218,7 @@ describe('Class Test Suite', function() {
 			}
 		});
 		
-		var grand = classified({
+		var grand = Child.extend({
 			sampleMethod: function() {
 				return this.___parent.sampleMethod();
 			},
@@ -214,7 +226,7 @@ describe('Class Test Suite', function() {
 			sampleMethod2: function() {
 				return this._sampleMethod2();
 			}
-		}).extend(Child.definition()).extend(Trait.definition()).load();
+		}).trait(Trait.definition()).load();
 		
 		it('should be able access parent protected methods', function() {
 			assert.equal('_bar', grand.sampleMethod());

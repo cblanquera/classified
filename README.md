@@ -73,7 +73,7 @@ var RootClass = classified({
 
 //child definition
 //you can use object or function as the definition
-var ChildClass = classified(function() {
+var ChildClass = RootClass.extend(function() {
 	var prototype = {};
 	
 	//constants
@@ -93,7 +93,7 @@ var ChildClass = classified(function() {
 	};
 	
 	return prototype;
-}).extend(RootClass.definition());
+});
 
 //instantiate child
 var child = ChildClass.load();
@@ -113,6 +113,7 @@ try {
   * Public, Private, Protected
   * Constants
   * Inheritance
+  * Traits
   * Works on server or client
 
 ## Why ?
@@ -129,6 +130,8 @@ try {
   * parents() - Returns direct parents of this definition
   * get() - Returns the publically accessable class definition function
   * load() - Returns class defined instantiation
+  * register(string) - saves a state of the definition which can be recalled in trait
+  * trait(string|function|object) - will setup the provided as a parent, if string will recall from registry
 
 ### What's up with the underscores?
 
