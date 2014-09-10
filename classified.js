@@ -366,6 +366,7 @@
 			
 			if(deep
 			&& typeof source[key] === 'object'
+			&& source[key] !== null
 			&& !_isNative(source[key])) {
 				destination[key] = _copy(source[key], {}, deep);
 			} else if(deep && source[key] instanceof Array) {
