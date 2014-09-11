@@ -150,7 +150,7 @@
 				parents 		= {}, 
 				protect 		= {},
 				parentSecret	= {},
-				secret			= _getPrivate(definition); 
+				secret			= _copy(_getPrivate(definition), {}, true); 
 			
 			//throw in the extends
 			for(var i = 0; i < extend.length; i++) {

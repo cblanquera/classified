@@ -17,6 +17,9 @@ var Root = classified(function() {
 			}
 		},
 		
+		resetList: [],
+		resetHash: {},
+		
 		//protected
 		_sampleProperty: 5.5,
 		_sampleDeepProperty: {
@@ -24,12 +27,18 @@ var Root = classified(function() {
 			sample2: [8, 9, 0, 1]
 		},
 		
+		_resetList: [],
+		_resetHash: {},
+		
 		//private
 		__sampleProperty: 6.5,
 		__sampleDeepProperty: {
 			sample1: '__Hello',
 			sample2: [12, 13, 14, 15]
-		}
+		},
+		
+		__resetList: [],
+		__resetHash: {}
 	};
 	
 	prototype.___construct = function() {
@@ -61,6 +70,42 @@ var Root = classified(function() {
 	prototype.samplePersistMethod2 = function() {
 		this.__sampleProperty = 'George' + this.__sampleProperty;
 		return this.__sampleProperty;
+	};
+	
+	prototype.setReset1Hash = function(name, value) {
+		this._resetHash[name] = value;
+		return this;
+	};
+	
+	prototype.getReset1Hash = function(name) {
+		return this._resetHash[name];
+	};
+	
+	prototype.setReset1Array = function(value) {
+		this._resetList.push(value);
+		return this;
+	};
+	
+	prototype.getReset1Array = function(index) {
+		return this._resetList[index];
+	};
+	
+	prototype.setReset2Hash = function(name, value) {
+		this.__resetHash[name] = value;
+		return this;
+	};
+	
+	prototype.getReset2Hash = function(name) {
+		return this.__resetHash[name];
+	};
+	
+	prototype.setReset2Array = function(value) {
+		this.__resetList.push(value);
+		return this;
+	};
+	
+	prototype.getReset2Array = function(index) {
+		return this.__resetList[index];
 	};
 	
 	return prototype;
@@ -110,6 +155,37 @@ describe('Class Test Suite', function() {
 		it('should patrol constants', function() {
 			root.SOME_CONSTANT = 'bar';
 			assert.equal('foo', root.sampleMethod());
+		});
+		
+		it('should reset deep properties', function() {
+			root.resetHash.sample1 = 'yup';
+			root.resetList.push('skip');
+			
+			root.setReset1Hash('sample', 'score1');
+			root.setReset1Array('sample1');
+			root.setReset2Hash('sample', 'score2');
+			root.setReset2Array('sample2');
+			
+			var root2 = Root.load();
+			
+			assert.equal('undefined', typeof root2.resetHash.sample1);
+			assert.equal('yup', root.resetHash.sample1);
+			
+			assert.equal('undefined', typeof root2.resetList[0]);
+			assert.equal('skip', root.resetList[0]);
+			
+			assert.equal('score1', root.getReset1Hash('sample'));
+			assert.equal('score2', root.getReset2Hash('sample'));
+			
+			assert.equal('sample1', root.getReset1Array(0));
+			assert.equal('sample2', root.getReset2Array(0));
+			
+			assert.equal('undefined', typeof root2.getReset1Hash('sample'));
+			assert.equal('undefined', typeof root2.getReset2Hash('sample'));
+			
+			
+			assert.equal('undefined', typeof root2.getReset1Array(0));
+			assert.equal('undefined', typeof root2.getReset2Array(0));
 		});
 	});
 	
@@ -165,11 +241,13 @@ describe('Class Test Suite', function() {
 		it('should be able access parent methods', function() {
 			var child = classified({
 				sampleMethod: function() {
+					this.__test = 1;
 					return this.___parent.sampleMethod();
 				}
 			}).trait(Root.definition()).load();
 			
 			assert.equal('foo', child.sampleMethod());
+			assert.equal(1, child.__test);
 		});
 		
 		it('should be able access parent protected methods', function() {
