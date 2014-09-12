@@ -178,6 +178,17 @@
 			//consider constants
 			var constants = Object.freeze(_getConstants(final));
 			
+			//collect all data we need for the hijacking
+			//or collect all hostages :)
+			var compressed = {
+				definition	: definition,
+				protect		: protect,
+				secret		: secret,
+				constants	: constants,
+				parents		: parents,
+				stack		: stack,
+				parentSecret: parentSecret };
+			
 			//do some magic
 			//parse final
 			for(key in final) {
@@ -187,10 +198,13 @@
 						continue;
 					}
 					
+					compressed.key 			= key;
+					compressed.callback 	= final[key];
+					
 					//We do it this way to capture closure variables that 
 					//changes inside of a loop. Inside of the alter callback
 					//we do not want to reference variables outside of the closure
-					final[key] = _hijackMethod(final[key], protect, secret, constants, parents, stack, parentSecret);
+					final[key] = _hijackMethod(compressed);
 				}
 			}
 			
@@ -250,7 +264,18 @@
 	
 	/* Private Methods
 	-------------------------------*/
-	var _hijackMethod = function(callback, protect, secret, constants, parents, stack, parentSecret) {
+	var _hijackMethod = function(compressed) {
+		//expand
+		var definition		= compressed.definition;
+		var key				= compressed.protect;
+		var callback		= compressed.callback;
+		var protect			= compressed.protect;
+		var secret			= compressed.secret;
+		var constants		= compressed.constants;
+		var parents			= compressed.parents;
+		var stack		 	= compressed.stack;
+		var parentSecret	= compressed.parentSecret;
+		
 		return function __classifiedBinded__() {
 			//we need to count stack calls to know when to modify
 			//the instance and when it is safe to de-modify the instance
@@ -289,6 +314,16 @@
 						this[property] = secret[property];	
 					}
 				}
+				
+				//is it inherited?
+				if(!definition[key]) {
+					//give the parent private as well
+					for(property in parentSecret) {
+						if(parentSecret.hasOwnProperty(property)) {
+							this[property] = parentSecret[property];	
+						}
+					}
+				}
 			}
 			
 			//always inject constants
@@ -320,6 +355,15 @@
 					if(secret.hasOwnProperty(property)) {
 						secret[property] = this[property];
 						delete this[property];	
+					}
+				}
+				
+				//remove the parent private as well
+				//in any case
+				for(property in parentSecret) {
+					if(parentSecret.hasOwnProperty(property)) {
+						parentSecret[property] = this[property];
+						delete this[property];
 					}
 				}
 			}
