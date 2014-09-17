@@ -496,24 +496,26 @@
 			: (value && type === 'object' && reHostCtor.test(toString.call(value))) || false;
 	};
 	
-	var _getConstants = function(prototype) {
+	var _getConstants = function(source) {
 		var destination = {};
-		for(var key in prototype) {
-			if(/^[A-Z0-9_]+$/.test(key)) {
-				destination[key] = prototype[key];
+		for(var key in source) {
+			if(source.hasOwnProperty(key)) {
+				if(/^[A-Z0-9_]+$/.test(key)) {
+					destination[key] = source[key];
+				}
 			}
 		}
 		
 		return destination;
 	};
 	
-	var _getPublic = function(prototype) {
+	var _getPublic = function(source) {
 		var destination = {};
-		for(var key in prototype) {
-			if(prototype.hasOwnProperty(key)) {
+		for(var key in source) {
+			if(source.hasOwnProperty(key)) {
 				if(!/^_[a-zA-Z0-9]/.test(key)
 				&& !/^__[a-zA-Z0-9]/.test(key)) {
-					destination[key] = prototype[key];
+					destination[key] = source[key];
 				}
 			}
 		}
@@ -521,12 +523,12 @@
 		return destination;
 	};
 	
-	var _getProtected = function(prototype) {
+	var _getProtected = function(source) {
 		var destination = {};
-		for(var key in prototype) {
-			if(prototype.hasOwnProperty(key)) {
+		for(var key in source) {
+			if(source.hasOwnProperty(key)) {
 				if(/^_[a-zA-Z0-9]/.test(key)) {
-					destination[key] = prototype[key];
+					destination[key] = source[key];
 				}
 			}
 		}
@@ -534,12 +536,12 @@
 		return destination;
 	};
 	
-	var _getPrivate = function(prototype) {
+	var _getPrivate = function(source) {
 		var destination = {};
-		for(var key in prototype) {
-			if(prototype.hasOwnProperty(key)) {
+		for(var key in source) {
+			if(source.hasOwnProperty(key)) {
 				if(/^__[a-zA-Z0-9]/.test(key)) {
-					destination[key] = prototype[key];
+					destination[key] = source[key];
 				}
 			}
 		}
@@ -547,12 +549,12 @@
 		return destination;
 	};
 	
-	var _getPubtected = function(prototype) {
+	var _getPubtected = function(source) {
 		var destination = {};
-		for(var key in prototype) {
-			if(prototype.hasOwnProperty(key)) {
+		for(var key in source) {
+			if(source.hasOwnProperty(key)) {
 				if(!/^__[a-zA-Z0-9]/.test(key)) {
-					destination[key] = prototype[key];
+					destination[key] = source[key];
 				}
 			}
 		}
@@ -560,13 +562,13 @@
 		return destination;
 	};
 	
-	var _getPubtectedMethods = function(prototype) {
+	var _getPubtectedMethods = function(source) {
 		var destination = {};
-		for(var key in prototype) {
-			if(prototype.hasOwnProperty(key)) {
+		for(var key in source) {
+			if(source.hasOwnProperty(key)) {
 				if(!/^__[a-zA-Z0-9]/.test(key)
-				&& typeof prototype[key] === 'function') {
-					destination[key] = prototype[key];
+				&& typeof source[key] === 'function') {
+					destination[key] = source[key];
 				}
 			}
 		}
