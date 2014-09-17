@@ -25,8 +25,13 @@
 			return method.load.apply(method, arguments);
 		},
 		
-		definition	= {},
-		extend		= [];
+		raw = {
+			definitions	: [],
+			traits		: [] },
+		
+		cached = {
+			definitions	: [],
+			traits		: [] };
 			
 		/* Public Methods
 		-------------------------------*/
@@ -36,29 +41,15 @@
 		 * @param function|object - if function, must return an object
 		 * @return this
 		 */
-		method.define = function(prototype) {
-			//if prototype is a function
-			if(typeof prototype === 'function') {
-				//the return of that function should be an object
-				var define = {};
-				prototype = prototype(define);
-				
-				if(!prototype) {
-					prototype = define;
-				}
-			}
-			
+		method.define = function(definition) {
 			//if it is not an object
-			if(typeof prototype !== 'object') {
+			//and not a function
+			if(typeof definition !== 'object'
+			&& typeof definition !== 'function') {
 				throw INVALID_DEFINE;
 			}
 			
-			//loop and add to allow partial definitions
-			for(var key in prototype) {
-				if(prototype.hasOwnProperty(key)) {
-					definition[key] = prototype[key];
-				}
-			}
+			raw.definitions.push(definition);
 			
 			return this;
 		};
@@ -71,14 +62,35 @@
 		 * @return object
 		 */
 		method.definition = function() {
-			var final = {};
-			//throw in the extends
-			for(var i = 0; i < extend.length; i++) {
-				_copy(extend[i], final, true);
+			var i, define, definition, final = {}, parents = this.parents();
+			
+			//throw in the parents
+			for(i = 0; i < parents.length; i++) {
+				_copy(_getPubtected(parents[i]), final, true);
 			}
 			
 			//finally copy the class definition
-			_copy(definition, final, true);
+			for(i = 0; i < raw.definitions.length; i++) {
+				if(typeof cached.definitions[i] === 'undefined') {
+					//if it is an object
+					if(typeof raw.definitions[i] === 'object') {
+						cached.definitions.push(raw.definitions[i]); 
+					//it can only be a function	
+					} else {
+						//the return of that function should be an object
+						define = {};
+						definition = raw.definitions[i](define);
+						
+						if(!definition) {
+							definition = define;
+						}
+						
+						cached.definitions.push(definition);
+					}
+				}
+				
+				_copy(cached.definitions[i], final, true);
+			}
 			
 			return final;
 		};
@@ -89,7 +101,33 @@
 		 * @return array
 		 */
 		method.parents = function() {
-			return extend();
+			var parents = [];
+			for(var i = 0; i < raw.traits.length; i++) {
+				
+				//is it cached?
+				if(typeof cached.traits[i] === 'undefined') {
+					switch(typeof raw.traits[i]) {
+						case 'object':
+							cached.traits.push(raw.traits[i]);
+							break;
+						case 'string':
+							cached.traits.push(registry[raw.traits[i]].definition());
+							break;
+						case 'function':
+							if(typeof raw.traits[i].__isClassified__ !== 'undefined') {
+								cached.traits.push(raw.traits[i].definition());	
+								break;
+							}
+							
+							cached.traits.push(raw.traits[i].prototype);
+							break;	
+					}
+				}
+				
+				parents.push(cached.traits[i]);
+			}
+			
+			return parents;
 		};
 		
 		/**
@@ -98,32 +136,17 @@
 		 * @param function|object - if function, will use prototype
 		 * @return this
 		 */
-		method.trait = function(prototype) {
-			//if prototype is a string
-			//and it's definied in the registry
-			if(typeof prototype === 'string') {
-				//is it a saved state?
-				if(typeof registry[prototype] !== 'undefined') {
-					prototype = registry[prototype];
-				//its a string and we do not know
-				//what to do with it
-				} else {
-					throw INVALID_TRAIT;
-				}
-			}
-			
-			//if prototype is a function
-			if(typeof prototype === 'function') {
-				//the return of that function should be an object
-				prototype = prototype.prototype;
-			}
-			
+		method.trait = function(definition) {
 			//if it is not an object
-			if(typeof prototype !== 'object') {
+			//and not a function
+			if(typeof definition !== 'object'
+			&& typeof definition !== 'function'
+			&& (typeof definition !== 'string'
+			|| typeof registry[definition] === 'undefined')) {
 				throw INVALID_TRAIT;
 			}
 			
-			extend.push(prototype);
+			raw.traits.push(definition);
 			
 			return this;
 		};
@@ -134,8 +157,9 @@
 		 * @param function|object - if function, must return object
 		 * @return function
 		 */
-		method.extend = function(prototype) {
-			return classified().define(prototype).trait(this.definition());
+		method.extend = function(definition) {
+			this.__isClassified__ = true;
+			return classified().define(definition).trait(this);
 		};
 		
 		/**
@@ -145,7 +169,9 @@
 		 * @return function
 		 */
 		method.get = function() {
-			var stack 			= { method: 0, parents: 0 },
+			var definition		= this.definition(),
+				traits			= this.parents(),		
+				stack 			= { method: 0, parents: 0 },
 				final 			= {}, 
 				parents 		= {}, 
 				protect 		= {},
@@ -153,11 +179,10 @@
 				secret			= _copy(_getPrivate(definition), {}, true); 
 			
 			//throw in the extends
-			for(var i = 0; i < extend.length; i++) {
-				_copy(_getPublic(extend[i]), final, true);
-				_copy(_getProtected(extend[i]), protect, true);
-				_copy(_getPubtected(extend[i]), parents, true);
-				_copy(_getPrivate(extend[i]), parentSecret, true);
+			for(var i = 0; i < traits.length; i++) {
+				_copy(_getProtected(traits[i]), protect, true);
+				_copy(_getPubtectedMethods(traits[i]), parents, true);
+				_copy(_getPrivate(traits[i]), parentSecret, true);
 			}
 			
 			//throw in the definition now
@@ -229,7 +254,7 @@
 		 * @return this
 		 */
 		method.register = function(name) {
-			registry[name] = this.definition();
+			registry[name] = this;
 			return this;
 		};
 		
@@ -533,8 +558,21 @@
 		var destination = {};
 		for(var key in prototype) {
 			if(prototype.hasOwnProperty(key)) {
-				if(typeof prototype[key] === 'function' 
-				&& !/^__[a-zA-Z0-9]/.test(key)) {
+				if(!/^__[a-zA-Z0-9]/.test(key)) {
+					destination[key] = prototype[key];
+				}
+			}
+		}
+		
+		return destination;
+	};
+	
+	var _getPubtectedMethods = function(prototype) {
+		var destination = {};
+		for(var key in prototype) {
+			if(prototype.hasOwnProperty(key)) {
+				if(!/^__[a-zA-Z0-9]/.test(key)
+				&& typeof prototype[key] === 'function') {
 					destination[key] = prototype[key];
 				}
 			}
