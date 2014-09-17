@@ -62,7 +62,7 @@
 		 * @return object
 		 */
 		method.definition = function() {
-			var i, define, definition, final = {}, parents = this.parents();
+			var i, final = {}, parents = this.parents();
 			
 			//throw in the parents
 			for(i = 0; i < parents.length; i++) {
@@ -77,15 +77,8 @@
 						cached.definitions.push(raw.definitions[i]); 
 					//it can only be a function	
 					} else {
-						//the return of that function should be an object
-						define = {};
-						definition = raw.definitions[i](define);
-						
-						if(!definition) {
-							definition = define;
-						}
-						
-						cached.definitions.push(definition);
+						//use new to get all the properties
+						cached.definitions.push(new (raw.definitions[i])());
 					}
 				}
 				

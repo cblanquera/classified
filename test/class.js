@@ -3,112 +3,110 @@ var classified 	= require('../classified');
 
 //Sample Root Class
 var Root = classified(function() {
-	var prototype = {
-		SOME_CONSTANT: 'foo',
-		sampleProperty: 4.5,
-		sampleDeepProperty: {
-			sample1: 'Hello',
-			sample2: [4, 5, 6, 7],
-			sample3: {
-				bool	: true,
-				regex	: /^abc/,
-				date	: new Date(),
-				string	: String
-			}
-		},
-		
-		resetList: [],
-		resetHash: {},
-		
-		//protected
-		_sampleProperty: 5.5,
-		_sampleDeepProperty: {
-			sample1: '_Hello',
-			sample2: [8, 9, 0, 1]
-		},
-		
-		_resetList: [],
-		_resetHash: {},
-		
-		//private
-		__sampleProperty: 6.5,
-		__sampleDeepProperty: {
-			sample1: '__Hello',
-			sample2: [12, 13, 14, 15]
-		},
-		
-		__resetList: [],
-		__resetHash: {}
+	this.SOME_CONSTANT = 'foo';
+	
+	this.sampleProperty = 4.5;
+	
+	this.sampleDeepProperty = {
+		sample1: 'Hello',
+		sample2: [4, 5, 6, 7],
+		sample3: {
+			bool	: true,
+			regex	: /^abc/,
+			date	: new Date(),
+			string	: String
+		}
 	};
 	
-	prototype.___construct = function() {
+	this.resetList = [];
+	this.resetHash = {};
+	
+	this._sampleProperty = 5.5;
+	
+	this._sampleDeepProperty = {
+		sample1: '_Hello',
+		sample2: [8, 9, 0, 1]
+	};
+	
+	this._resetList = [];
+	this._resetHash = {};
+	
+	this.__sampleProperty = 6.5;
+	
+	this.__sampleDeepProperty = {
+		sample1: '__Hello',
+		sample2: [12, 13, 14, 15]
+	};
+	
+	this.__resetList = [];
+	this.__resetHash = {};
+	
+	this.___construct = function() {
 		this.constructCalled = true;
 	};
 	
-	prototype.sampleMethod = function() {
+	this.sampleMethod = function() {
 		return this.SOME_CONSTANT;
 	};
 	
-	prototype._sampleMethod = function() {
+	this._sampleMethod = function() {
 		return '_bar';
 	};
 	
-	prototype.__sampleMethod = function() {
+	this.__sampleMethod = function() {
 		return '__zoo';
 	};
 	
-	prototype.sampleAccessMethod = function() {
+	this.sampleAccessMethod = function() {
 		return this.sampleMethod()
 		+ this._sampleMethod()
 		+ this.__sampleMethod();
 	};
 	
-	prototype.samplePersistMethod = function() {
+	this.samplePersistMethod = function() {
 		return ++ this._sampleProperty;
 	};
 	
-	prototype.samplePersistMethod2 = function() {
+	this.samplePersistMethod2 = function() {
 		this.__sampleProperty = 'George' + this.__sampleProperty;
 		return this.__sampleProperty;
 	};
 	
-	prototype.setReset1Hash = function(name, value) {
+	this.setReset1Hash = function(name, value) {
 		this._resetHash[name] = value;
 		return this;
 	};
 	
-	prototype.getReset1Hash = function(name) {
+	this.getReset1Hash = function(name) {
 		return this._resetHash[name];
 	};
 	
-	prototype.setReset1Array = function(value) {
+	this.setReset1Array = function(value) {
 		this._resetList.push(value);
 		return this;
 	};
 	
-	prototype.getReset1Array = function(index) {
+	this.getReset1Array = function(index) {
 		return this._resetList[index];
 	};
 	
-	prototype.setReset2Hash = function(name, value) {
+	this.setReset2Hash = function(name, value) {
 		this.__resetHash[name] = value;
 		return this;
 	};
 	
-	prototype.getReset2Hash = function(name) {
+	this.getReset2Hash = function(name) {
 		return this.__resetHash[name];
 	};
 	
-	prototype.setReset2Array = function(value) {
+	this.setReset2Array = function(value) {
 		this.__resetList.push(value);
 		return this;
 	};
 	
-	prototype.getReset2Array = function(index) {
+	this.getReset2Array = function(index) {
 		return this.__resetList[index];
 	};
-	
-	return prototype;
 });
 
 describe('Class Test Suite', function() {

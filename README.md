@@ -12,11 +12,17 @@ $ npm install classified
 
 ### Usage
 
-#### Node and RequireJS
+#### Node
 
 ```
 var classified = require('classified');
 classified();
+```
+
+#### RequireJS
+
+```
+var classified = require(['classified'], function(classified) {});
 ```
 
 #### jQuery
@@ -74,25 +80,21 @@ var RootClass = classified({
 //child definition
 //you can use object or function as the definition
 var ChildClass = RootClass.extend(function() {
-	var prototype = {};
-	
 	//constants
-	prototype.SOME_CONSTANT_2 = 'bar';
+	this.SOME_CONSTANT_2 = 'bar';
 	
 	//protected properties
-	prototype._sampleProperty = 7.5;
+	this._sampleProperty = 7.5;
 	
 	//public methods
-	prototype.sampleMethod = function() {
+	this.sampleMethod = function() {
 		return this._sampleMethod();
 	};
 	
 	//protected methods
-	prototype._sampleMethod = function() {
+	this._sampleMethod = function() {
 		return this.___parent._sampleMethod();
 	};
-	
-	return prototype;
 });
 
 //instantiate child
@@ -115,12 +117,7 @@ try {
   * Inheritance
   * Traits
   * Works on server or client
-
-## Why ?
-
-  While interviewing at Yahoo! in 2009, they asked me if it was possible to write protected functionality in JS.
-  I said yes. They said No. I didn't get the job. Now I found this useful for my future developments. 
-  I updated my proof with the latest features from JS.
+  * Circular Dependencies Ready
 
 ### Methods
 
