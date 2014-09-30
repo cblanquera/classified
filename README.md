@@ -2,6 +2,8 @@
 
   Real OOP for Javascript.
 
+[![Build Status](https://api.travis-ci.org/cblanquera/classified.png)](https://travis-ci.org/cblanquera/classified/)
+
 ### Installation
 
 ```bash
