@@ -17,7 +17,8 @@
 	"constant"
   ],
   "devDependencies": {
-    "mocha": "1.21.4"
+    "mocha": "1.21.4",
+	"mocha-jshint": "0.0.9"
   },
   "dependencies": {},
   "main": "./classified.js",

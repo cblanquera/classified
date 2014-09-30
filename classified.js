@@ -297,15 +297,16 @@
 		return function __classifiedBinded__() {
 			//we need to count stack calls to know when to modify
 			//the instance and when it is safe to de-modify the instance
+			var property;
 			
 			//if no stack
-			if(!stack.method++) {
+			if(!stack.method) {
 				//setup the instance
 				//remember the scope
-				var self = this, property;
+				var self = this;
 				
 				//make the magic parent variable an object
-				this.___parent = {}
+				this.___parent = {};
 				
 				//again we need to set the parents up
 				//everytime we call this method
@@ -343,6 +344,8 @@
 					}
 				}
 			}
+			
+			stack.method++;
 			
 			//always inject constants
 			for(property in constants) {
@@ -394,7 +397,7 @@
 		return function __classifiedBinded__() {
 			var property;
 			//for parents add
-			if(!stack.parents++) {
+			if(!stack.parents) {
 				//lets set up private
 				for(property in secret) {
 					if(secret.hasOwnProperty(property)) {
@@ -402,6 +405,8 @@
 					}
 				}
 			}
+			
+			stack.parents ++;
 			
 			var results = callback.apply(scope, arguments);
 			
@@ -605,6 +610,6 @@
 		window.classified = function(definition) {
 			definition = definition || {};
 			return classified().define(definition);
-		}
+		};
 	}
 })();
