@@ -185,6 +185,17 @@ describe('Class Test Suite', function() {
 			assert.equal('undefined', typeof root2.getReset1Array(0));
 			assert.equal('undefined', typeof root2.getReset2Array(0));
 		});
+		
+		it('should only be one', function() {
+			var single = classified({ x: 1 }).singleton();
+			var multiple = classified({ x: 1 });
+			
+			single().x = 2;
+			multiple().x = 3;
+			
+			assert(2, single().x);
+			assert(1, multiple().x);
+		});
 	});
 	
 	describe('Inheritance Tests', function() {

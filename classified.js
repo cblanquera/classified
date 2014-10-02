@@ -24,6 +24,10 @@
 		var method = function() {
 			return method.load.apply(method, arguments);
 		},
+	
+		singleton = false,
+		
+		instance = null,
 		
 		raw = {
 			definitions	: [],
@@ -236,8 +240,13 @@
 		 *
 		 * @return object
 		 */
-		method.load = function() {
-			return this.get().load.apply(null, arguments);
+		method.load = function() {		
+			//if no instance or no singleton
+			if(!instance || !singleton) {
+				instance = this.get().load.apply(null, arguments);
+			}
+			
+			return instance;
 		};
 
 		/**
@@ -248,6 +257,17 @@
 		 */
 		method.register = function(name) {
 			registry[name] = this;
+			return this;
+		};
+	
+		/**
+		 * Sets loader to return a single instance
+		 *
+		 * @param bool
+		 * @return this
+		 */
+		method.singleton = function(yes) {
+			singleton = yes !== false;
 			return this;
 		};
 		
