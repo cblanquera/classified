@@ -1,4 +1,6 @@
 /**
+ * Classified - Real OOP for Javascript
+ * 
  * Adds protected, private, constants, parent(super)
  * functionality to regular defined classes.
  * In the backend the methods are being hijacked
@@ -9,6 +11,11 @@
  * 
  * The main quirk is when dealing with async inside the methods. In these cases,
  * methods need to be stored statically in order to use it inside of an async
+ *
+ * @version 0.1.2
+ * @author Christian Blanquera <cblanquera@openovate.com>
+ * @website https://github.com/cblanquera/classified
+ * @license MIT
  */
 (function() {
 	/* Definition
