@@ -5,3 +5,5 @@ node_js:
 install:
   - npm update npm -g
   - npm install
+after_success:
+  coveralls
