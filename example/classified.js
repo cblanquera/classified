@@ -12,7 +12,7 @@
  * The main quirk is when dealing with async inside the methods. In these cases,
  * methods need to be stored statically in order to use it inside of an async
  *
- * @version 0.1.2
+ * @version 0.1.3
  * @author Christian Blanquera <cblanquera@openovate.com>
  * @website https://github.com/cblanquera/classified
  * @license MIT
@@ -326,8 +326,8 @@
 			//the instance and when it is safe to de-modify the instance
 			var property;
 			
-			//if no stack
-			if(!stack.method) {
+			//if no stack and is not frozen
+			if(!stack.method && typeof this.___frozen === 'undefined') {
 				//setup the instance
 				//remember the scope
 				var self = this;
@@ -381,17 +381,19 @@
 				}
 			}
 			
-			// The method only need to be bound temporarily, so we
-			// remove it when we're done executing
-			results = callback.apply(this, arguments);
+			//*NEW Magical freeze methods for async
+			//use responsibly :)
+			this.___freeze = function() {
+				this.___frozen = true;
+				return this;
+			};
 			
-			//if there is no more stack count
-			if(!--stack.method) {
+			this.___unfreeze = function() {
 				//remove parent
 				delete this.___parent;
 				
 				//remove protected
-				for(property in protect) {
+				for(var property in protect) {
 					if(protect.hasOwnProperty(property)) {
 						protect[property] = this[property];
 						delete this[property];	
@@ -414,6 +416,23 @@
 						delete this[property];
 					}
 				}
+				
+				delete this.___freeze;
+				delete this.___unfreeze;
+				delete this.___frozen;
+				
+				return this;
+			};
+			
+			// The method only need to be bound temporarily, so we
+			// remove it when we're done executing
+			results = callback.apply(this, arguments);
+			
+			//this works for syncrounous processes
+			//but not for async processes
+			//if there is no more stack count
+			if(!--stack.method && typeof this.___frozen === 'undefined') {
+				this.___unfreeze();
 			}
 			
 			return results;

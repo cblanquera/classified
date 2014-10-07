@@ -259,6 +259,47 @@ describe('Class Test Suite', function() {
 			assert.equal(1, child.__test);
 		});
 		
+		it('should be able to freeze and unfreeze data', function(done) {
+			var child = classified({
+				_sampleProperty: 0,
+				
+				sampleOutput: function() {
+					return this._sampleProperty;
+				},
+				
+				sampleMethod: function(callback) {
+					this.___freeze();
+					
+					setTimeout(function() {
+						this._sampleMethod(callback);
+					}.bind(this));
+				},
+				
+				_sampleMethod: function(callback) {
+					assert.equal(0, this._sampleProperty);
+					
+					this._sampleProperty = 1;
+					this.___unfreeze();
+					callback();
+				}
+			}).trait(Root.definition()).load();
+			
+			
+			child.sampleMethod(function() {
+				assert.equal('undefined', typeof child._sampleProperty);
+			});
+			
+			assert.equal(0, child.sampleOutput());
+			
+			setTimeout(function() {
+				assert.equal(1, child.sampleOutput());
+				assert.equal('undefined', typeof child.___frozen);
+				assert.equal('undefined', typeof child.___freeze);
+				assert.equal('undefined', typeof child.___unfreeze);
+				done();
+			}, 100);
+		});
+		
 		it('should be able access parent protected methods', function() {
 			var child = classified({
 				sampleMethod: function() {

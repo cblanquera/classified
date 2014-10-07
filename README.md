@@ -124,6 +124,7 @@ try {
   * Traits
   * Works on server or client
   * Circular Dependencies Ready
+  * Node asyncrounous protected and private support
 
 ### Methods
 
@@ -141,3 +142,21 @@ try {
   * _ - protected properties and methods
   * __ - private properties and methods
   * ___ - Magic placeholder (Waiting on harmony)
+
+
+### Node Async Support
+
+  Use `___freeze()` and `___unfreeze()` in Node for asyncronous patterns as in the example below. 
+
+```
+classified(function() {
+	this._protectedValue = 4;
+	this.somethingToAsync = function() {
+		this.___freeze();
+		setTimeout(function() {
+			this._protectedValue = 5;
+			this.___unfreeze();
+		}.bind(this), 10);
+	};
+});
+```
