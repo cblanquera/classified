@@ -586,12 +586,12 @@
 		return destination;
 	};
 	
-	var _freeze = function() {
+	var _freeze = function __classifiedBinded__() {
 		this.___frozen = true;
 		return this;
 	};
 	
-	var _unfreeze = function(protect, secret, parentSecret) {
+	var _unfreeze = function __classifiedBinded__(protect, secret, parentSecret) {
 		//remove parent
 		delete this.___parent;
 		
