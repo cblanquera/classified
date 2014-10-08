@@ -326,7 +326,7 @@
 			//the instance and when it is safe to de-modify the instance
 			var property;
 			
-			//if no stack and is not frozen
+			//if no stack
 			if(!stack.method && typeof this.___frozen === 'undefined') {
 				//setup the instance
 				//remember the scope
@@ -381,55 +381,14 @@
 				}
 			}
 			
-			//*NEW Magical freeze methods for async
-			//use responsibly :)
-			this.___freeze = function() {
-				this.___frozen = true;
-				return this;
-			};
-			
-			this.___unfreeze = function() {
-				//remove parent
-				delete this.___parent;
-				
-				//remove protected
-				for(var property in protect) {
-					if(protect.hasOwnProperty(property)) {
-						protect[property] = this[property];
-						delete this[property];	
-					}
-				}
-				
-				//remove private
-				for(property in secret) {
-					if(secret.hasOwnProperty(property)) {
-						secret[property] = this[property];
-						delete this[property];	
-					}
-				}
-				
-				//remove the parent private as well
-				//in any case
-				for(property in parentSecret) {
-					if(parentSecret.hasOwnProperty(property)) {
-						parentSecret[property] = this[property];
-						delete this[property];
-					}
-				}
-				
-				delete this.___freeze;
-				delete this.___unfreeze;
-				delete this.___frozen;
-				
-				return this;
-			};
+			//NEW* Freeze and unfreeze for async Node
+			this.___freeze = _freeze.bind(this);
+			this.___unfreeze = _unfreeze.bind(this, protect, secret, parentSecret);
 			
 			// The method only need to be bound temporarily, so we
 			// remove it when we're done executing
 			results = callback.apply(this, arguments);
 			
-			//this works for syncrounous processes
-			//but not for async processes
 			//if there is no more stack count
 			if(!--stack.method && typeof this.___frozen === 'undefined') {
 				this.___unfreeze();
@@ -625,6 +584,47 @@
 		}
 		
 		return destination;
+	};
+	
+	var _freeze = function() {
+		this.___frozen = true;
+		return this;
+	};
+	
+	var _unfreeze = function(protect, secret, parentSecret) {
+		//remove parent
+		delete this.___parent;
+		
+		//remove protected
+		for(var property in protect) {
+			if(protect.hasOwnProperty(property)) {
+				protect[property] = this[property];
+				delete this[property];	
+			}
+		}
+		
+		//remove private
+		for(property in secret) {
+			if(secret.hasOwnProperty(property)) {
+				secret[property] = this[property];
+				delete this[property];	
+			}
+		}
+		
+		//remove the parent private as well
+		//in any case
+		for(property in parentSecret) {
+			if(parentSecret.hasOwnProperty(property)) {
+				parentSecret[property] = this[property];
+				delete this[property];
+			}
+		}
+		
+		delete this.___freeze;
+		delete this.___unfreeze;
+		delete this.___frozen;
+		
+		return this;
 	};
 	
 	/* Adaptor
