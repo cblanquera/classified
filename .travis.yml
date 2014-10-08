@@ -5,6 +5,3 @@ node_js:
 install:
   - npm update npm -g
   - npm install
-script:  
-  - make test-coveralls
-  - cat ./coverage/lcov.info | ./node_modules/.bin/coveralls --verbose

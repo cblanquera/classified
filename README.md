@@ -5,7 +5,6 @@
 
 [![NPM](https://badge.fury.io/js/classified.svg)](https://www.npmjs.org/package/classified)
 [![Build Status](https://api.travis-ci.org/cblanquera/classified.png)](https://travis-ci.org/cblanquera/classified/)
-[![Coverage Status](https://img.shields.io/coveralls/cblanquera/classified.svg)](https://coveralls.io/r/cblanquera/classified)
 
 
 ### Installation
